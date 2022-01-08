@@ -1,0 +1,10 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 81.70.10.9:8848
+  application:
+    name: gulimall-gateway
+
+server:
+  port: 88
