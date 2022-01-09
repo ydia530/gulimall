@@ -70,10 +70,9 @@ public class CategoryController {
     /**
      * 修改
      */
-    @PostMapping("/update")
+    @PutMapping("/update")
     public R update(@RequestBody CategoryEntity category){
 		categoryService.updateById(category);
-
         return R.ok();
     }
 
