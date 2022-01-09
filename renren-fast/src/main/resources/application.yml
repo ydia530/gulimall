@@ -5,9 +5,9 @@ server:
     max-threads: 1000
     min-spare-threads: 30
   port: 8080
-  connection-timeout: 5000ms
   servlet:
     context-path: /renren-fast
+
 
 spring:
   # 环境 dev|test|prod
@@ -37,6 +37,12 @@ spring:
         min-idle: 5       # 连接池中的最小空闲连接
   mvc:
     throw-exception-if-no-handler-found: true
+  application:
+    name: renren-fast
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 81.70.10.9:8848
 #  resources:
 #    add-mappings: false
 
