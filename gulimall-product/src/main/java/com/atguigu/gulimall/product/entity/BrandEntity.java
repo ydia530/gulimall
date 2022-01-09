@@ -49,7 +49,6 @@ public class BrandEntity implements Serializable {
 	/**
 	 * 显示状态[0-不显示；1-显示]
 	 */
-	@TableLogic(value = "1", delval = "0")
 	private Integer showStatus;
 
 }

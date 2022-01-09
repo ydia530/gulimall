@@ -60,7 +60,7 @@ public class CategoryController {
     /**
      * 保存
      */
-    @PutMapping("/save")
+    @PostMapping("/save")
     public R save(@RequestBody CategoryEntity category){
 		categoryService.save(category);
 
