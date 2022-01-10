@@ -1,5 +1,8 @@
 package com.atguigu.gulimall.product.controller;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +30,8 @@ import com.atguigu.common.utils.R;
 public class CategoryController {
     @Autowired
     private CategoryService categoryService;
+
+
 
     /**
      * 查出所有分类及子分类，组装成树

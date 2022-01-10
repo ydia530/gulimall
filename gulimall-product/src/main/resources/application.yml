@@ -8,6 +8,8 @@ spring:
     nacos:
       discovery:
         server-addr: 81.70.10.9:8848
+
+
   application:
     name: gulimall-product
 
@@ -26,3 +28,4 @@ server:
 logging:
   level:
     com.atguigu.gulimall: debug
+
