@@ -1,10 +1,10 @@
 package com.atguigu.gulimal.thirdparty.controller;
 
-import com.alibaba.nacos.api.config.annotation.NacosValue;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.common.utils.BinaryUtil;
 import com.aliyun.oss.model.MatchMode;
 import com.aliyun.oss.model.PolicyConditions;
+import com.atguigu.common.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
@@ -36,16 +36,14 @@ public class OssController {
     String accessKey ;
 
     @RequestMapping("/oss/policy")
-    public Map<String, String> policy(){
-
+    public R policy(){
         String host = "https://" + bucket + "." + endpoint; // host的格式为 bucketname.endpoint
-
         String format = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
         String dir = format; // 用户上传文件时指定的前缀。
 
         Map<String, String> respMap=null;
         try {
-            // 签名有效事件
+            // 签名有效时间
             long expireTime = 30;
             long expireEndTime = System.currentTimeMillis() + expireTime * 1000;
             Date expiration = new Date(expireEndTime);
@@ -69,11 +67,10 @@ public class OssController {
             respMap.put("expire", String.valueOf(expireEndTime / 1000));
 
         } catch (Exception e) {
-            // Assert.fail(e.getMessage());
             System.out.println(e.getMessage());
         } finally {
             ossClient.shutdown();
         }
-        return respMap;
+        return R.ok().put("data", respMap);
     }
 }
