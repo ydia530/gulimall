@@ -15,4 +15,4 @@ mybatis-plus:
       logic-not-delete-value: 0
 
 server:
-  port: 9000
+  port: 10000
