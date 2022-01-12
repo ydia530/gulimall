@@ -43,7 +43,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
         return firstLevelMenus.stream()
                 .map(parentMenu -> {
-                        parentMenu.setChildrenCat(consutructTree(parentMenu, categoryEntities));
+                        parentMenu.setChildren(consutructTree(parentMenu, categoryEntities));
                         return parentMenu;
                     })
                 .sorted(Comparator.comparingInt(CategoryEntity::getSort))
@@ -57,13 +57,18 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     }
 
+    @Override
+    public Long[] findCatelogPath(Long catelogId) {
+        return new Long[0];
+    }
+
     /**
      * 递归查找子菜单,构建结构树
      */
     private List<CategoryEntity> consutructTree(CategoryEntity parentMenu, List<CategoryEntity> categoryEntities) {
         return categoryEntities.stream().
                 filter(categoryEntity -> categoryEntity.getParentCid().equals(parentMenu.getCatId()))
-                .map(categoryEntity -> {categoryEntity.setChildrenCat(consutructTree(categoryEntity, categoryEntities)); return categoryEntity;})
+                .map(categoryEntity -> {categoryEntity.setChildren(consutructTree(categoryEntity, categoryEntities)); return categoryEntity;})
                 .sorted(Comparator.comparingInt(CategoryEntity::getSort))
                 .collect(Collectors.toList());
     }
