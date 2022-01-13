@@ -4,9 +4,7 @@ import com.atguigu.gulimall.product.service.CategoryBrandRelationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -63,7 +61,14 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     @Override
     public Long[] findCatelogPath(Long catelogId) {
-        return new Long[0];
+        LinkedList<Long> path = new LinkedList<>();
+        path.add(catelogId);
+        CategoryEntity category = baseMapper.selectById(catelogId);
+        while ( category.getParentCid() != 0L){
+            category = baseMapper.selectById(category.getParentCid());
+            path.addFirst(category.getCatId());
+        }
+        return path.toArray(new Long[0]);
     }
 
     @Override
