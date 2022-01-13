@@ -3,9 +3,13 @@ package com.atguigu.gulimall.product.service.impl;
 import com.atguigu.gulimall.product.VO.AttrResponseVo;
 import com.atguigu.gulimall.product.VO.AttrVo;
 import com.atguigu.gulimall.product.dao.AttrAttrgroupRelationDao;
+import com.atguigu.gulimall.product.dao.AttrGroupDao;
 import com.atguigu.gulimall.product.dao.CategoryDao;
 import com.atguigu.gulimall.product.entity.AttrAttrgroupRelationEntity;
 import com.atguigu.gulimall.product.entity.AttrGroupEntity;
+import com.atguigu.gulimall.product.entity.BrandEntity;
+import com.atguigu.gulimall.product.service.CategoryService;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +42,13 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
     @Autowired
     private CategoryDao categoryDao;
 
+    @Autowired
+    private AttrGroupDao attrGroupDao;
+
+    @Autowired
+    private CategoryService categoryService;
+
+
     @Override
     public PageUtils queryPage(Long id, Map<String, Object> params) {
         //先判断有没有关键词
@@ -49,27 +60,45 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
             );
         }
 
+        IPage<AttrEntity> page = null;
         //如果当前目录为0，返回所有分类的属性
         if(id == 0){
-            IPage<AttrEntity> page =this.page(new Query<AttrEntity>().getPage(params), wrapper);
-            return new PageUtils(page);
+            page =this.page(new Query<AttrEntity>().getPage(params), wrapper);
+        } else{
+            wrapper.eq("catelog_id", id);
+            page = this.page(new Query<AttrEntity>().getPage(params), wrapper);
         }
-
-        wrapper.eq("catelog_id", id);
-        IPage<AttrEntity> page = this.page(new Query<AttrEntity>().getPage(params), wrapper);
         PageUtils pageUtils = new PageUtils(page);
-
         //先查询所有的分类名，组成map
-        List<Long> categoryIds = page.getRecords().stream().map(attrEntity -> attrEntity.getCatelogId()).collect(Collectors.toList());
-        Map<Long, String> categoryDict = categoryDao.selectBatchIds(categoryIds).stream().
+        List<Long> attrIds = page.getRecords().stream().map(attrEntity -> attrEntity.getAttrId()).collect(Collectors.toList());
+        QueryWrapper queryWrapper = new QueryWrapper();
+        queryWrapper.in("attr_id", attrIds);
+        List<AttrAttrgroupRelationEntity> relationEntities = attrAttrgroupRelationDao.selectList(queryWrapper);
+
+        Map<Long, Long> relationDict = relationEntities.stream().collect(Collectors.toMap(relationEntity ->
+                relationEntity.getAttrId(), relationEntity -> relationEntity.getAttrGroupId()));
+
+        List<AttrGroupEntity> attrGroupEntities = attrGroupDao.selectBatchIds(relationDict.values());
+
+        Map<Long, String> groupDict = attrGroupEntities.stream()
+                .collect(Collectors.toMap(attrGroupEntity -> attrGroupEntity.getAttrGroupId(), attrGroupEntity -> attrGroupEntity.getAttrGroupName()));
+
+        Map<Long, String> categoryDict = categoryDao.selectBatchIds(
+                        attrGroupEntities.stream().map(attrGroupEntity -> attrGroupEntity.getCatelogId())
+                                .collect(Collectors.toList())).stream().
                 collect(Collectors.toMap(categoryEntity -> categoryEntity.getCatId(), categoryEntity -> categoryEntity.getName()));
+
+
 
         List<AttrResponseVo> responseVos = page.getRecords().stream().map(attrEntity -> {
             AttrResponseVo attrResponseVo = new AttrResponseVo();
             BeanUtils.copyProperties(attrEntity,attrResponseVo);
             attrResponseVo.setCatelogName(categoryDict.get(attrEntity.getCatelogId()));
+            attrResponseVo.setGroupName(groupDict.get(relationDict.get(attrEntity.getAttrId())));
             return attrResponseVo;
         }).collect(Collectors.toList());
+
+
         responseVos.forEach(System.out::println);
         pageUtils.setList(responseVos);
         return pageUtils;
@@ -82,9 +111,40 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         BeanUtils.copyProperties(attr, attrEntity);
         this.save(attrEntity);
         AttrAttrgroupRelationEntity attrAttrgroupRelationEntity = new AttrAttrgroupRelationEntity();
-        attrAttrgroupRelationEntity.setAttrId(attr.getAttrId());
+        attrAttrgroupRelationEntity.setAttrId(attrEntity.getAttrId());
         attrAttrgroupRelationEntity.setAttrGroupId(attr.getAttrGroupId());
+        attrAttrgroupRelationEntity.setAttrSort(0);
         attrAttrgroupRelationDao.insert(attrAttrgroupRelationEntity);
+    }
+
+    @Override
+    public AttrResponseVo getInfoById(Long attrId) {
+        AttrEntity attr = baseMapper.selectById(attrId);
+        AttrResponseVo attrResponseVo = new AttrResponseVo();
+        BeanUtils.copyProperties(attr, attrResponseVo);
+        attrResponseVo.setCatelogPath(categoryService.findCatelogPath(attr.getCatelogId()));
+        AttrAttrgroupRelationEntity relationEntity = attrAttrgroupRelationDao.
+                selectOne(new QueryWrapper<AttrAttrgroupRelationEntity>()
+                        .eq("attr_id", attrResponseVo.getAttrId()));
+        attrResponseVo.setAttrGroupId(relationEntity.getAttrGroupId());
+        attrResponseVo.setGroupName(attrGroupDao.selectById(relationEntity.getAttrGroupId()).getAttrGroupName());
+        return attrResponseVo;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateInfo(AttrVo attr) {
+        //先更新主体
+        AttrEntity attrEntity = new AttrEntity();
+        BeanUtils.copyProperties(attr, attrEntity);
+        this.updateById(attrEntity);
+
+        //更新属性与属性分组关联
+        AttrAttrgroupRelationEntity relationEntity = new AttrAttrgroupRelationEntity();
+        relationEntity.setAttrGroupId(attr.getAttrGroupId());
+        attrAttrgroupRelationDao.update(
+                relationEntity, new UpdateWrapper<AttrAttrgroupRelationEntity>().eq("attr_id", attr.getAttrId()));
+
     }
 
 }

@@ -1,5 +1,6 @@
 package com.atguigu.gulimall.product.service;
 
+import com.atguigu.gulimall.product.VO.AttrResponseVo;
 import com.atguigu.gulimall.product.VO.AttrVo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.atguigu.common.utils.PageUtils;
@@ -19,5 +20,9 @@ public interface AttrService extends IService<AttrEntity> {
     PageUtils queryPage(Long id, Map<String, Object> params);
 
     void saveAttr(AttrVo attr);
+
+    AttrResponseVo getInfoById(Long attrId);
+
+    void updateInfo(AttrVo attr);
 }
 

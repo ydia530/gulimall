@@ -41,6 +41,11 @@ public class AttrVo {
      */
     private Integer showDesc;
 
+    /**
+     * 属性可选择类型 [0 - 单选择， 1 - 多选择]
+     */
+    private Integer valueType;
+
     private Long attrGroupId;
 
 }

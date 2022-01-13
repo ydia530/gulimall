@@ -12,7 +12,6 @@ import com.atguigu.common.utils.Query;
 import com.atguigu.gulimall.product.dao.AttrGroupDao;
 import com.atguigu.gulimall.product.entity.AttrGroupEntity;
 import com.atguigu.gulimall.product.service.AttrGroupService;
-import org.w3c.dom.Attr;
 
 
 @Service("attrGroupService")
