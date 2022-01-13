@@ -30,11 +30,7 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupDao, AttrGroupEnt
 
     @Override
     public PageUtils queryPage(Map<String, Object> params, Integer id) {
-        //如果当前目录为0，返回所有分类的属性
-        if(id == 0){
-            IPage<AttrGroupEntity> page =this.page(new Query<AttrGroupEntity>().getPage(params));
-            return new PageUtils(page);
-        }
+
         //先判断有没有关键词
         QueryWrapper<AttrGroupEntity> wrapper = new QueryWrapper<>();
         String keyword = (String) params.get("key");
@@ -42,6 +38,12 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupDao, AttrGroupEnt
             wrapper.and((obj)->
                     obj.eq("attr_group_id", keyword).or().like("attr_group_name", keyword)
             );
+        }
+
+        //如果当前目录为0，返回所有分类的属性
+        if(id == 0){
+            IPage<AttrGroupEntity> page =this.page(new Query<AttrGroupEntity>().getPage(params), wrapper);
+            return new PageUtils(page);
         }
 
         wrapper.eq("catelog_id", id);

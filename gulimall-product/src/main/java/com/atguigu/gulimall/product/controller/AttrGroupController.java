@@ -37,7 +37,6 @@ public class AttrGroupController {
      */
     @GetMapping("/list/{categoryId}")
     public R list(@PathVariable("categoryId") Integer categoryId, @RequestParam Map<String, Object> params){
-        System.out.println("==================================");
         PageUtils page = attrGroupService.queryPage(params, categoryId);
         return R.ok().put("page", page);
     }
