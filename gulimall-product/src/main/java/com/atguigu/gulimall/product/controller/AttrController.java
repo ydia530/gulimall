@@ -32,9 +32,9 @@ public class AttrController {
     /**
      * 列表
      */
-    @GetMapping("/base/list/{id}")
-    public R list(@PathVariable("id") Long id, @RequestParam Map<String, Object> params){
-        PageUtils page = attrService.queryPage(id, params);
+    @GetMapping("/{attrType}/list/{id}")
+    public R list(@PathVariable("id") Long id, @RequestParam Map<String, Object> params, @PathVariable("attrType") String attrType){
+        PageUtils page = attrService.queryPage(id, params, attrType);
 
         return R.ok().put("page", page);
     }

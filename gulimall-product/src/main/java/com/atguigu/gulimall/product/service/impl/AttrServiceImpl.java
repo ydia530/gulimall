@@ -7,13 +7,11 @@ import com.atguigu.gulimall.product.dao.AttrGroupDao;
 import com.atguigu.gulimall.product.dao.CategoryDao;
 import com.atguigu.gulimall.product.entity.AttrAttrgroupRelationEntity;
 import com.atguigu.gulimall.product.entity.AttrGroupEntity;
-import com.atguigu.gulimall.product.entity.BrandEntity;
 import com.atguigu.gulimall.product.service.CategoryService;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -50,9 +48,12 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
 
 
     @Override
-    public PageUtils queryPage(Long id, Map<String, Object> params) {
+    public PageUtils queryPage(Long id, Map<String, Object> params, String attrType) {
         //先判断有没有关键词
         QueryWrapper<AttrEntity> wrapper = new QueryWrapper<>();
+
+        //根据属性类型判断
+        wrapper.eq("attr_type", attrType.equals("base") ?1:0);
         String keyword = (String) params.get("key");
         if (StringUtils.isNotBlank(keyword)){
             wrapper.and((obj)->
@@ -78,26 +79,38 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         Map<Long, Long> relationDict = relationEntities.stream().collect(Collectors.toMap(relationEntity ->
                 relationEntity.getAttrId(), relationEntity -> relationEntity.getAttrGroupId()));
 
-        List<AttrGroupEntity> attrGroupEntities = attrGroupDao.selectBatchIds(relationDict.values());
-
-        Map<Long, String> groupDict = attrGroupEntities.stream()
-                .collect(Collectors.toMap(attrGroupEntity -> attrGroupEntity.getAttrGroupId(), attrGroupEntity -> attrGroupEntity.getAttrGroupName()));
-
-        Map<Long, String> categoryDict = categoryDao.selectBatchIds(
-                        attrGroupEntities.stream().map(attrGroupEntity -> attrGroupEntity.getCatelogId())
-                                .collect(Collectors.toList())).stream().
-                collect(Collectors.toMap(categoryEntity -> categoryEntity.getCatId(), categoryEntity -> categoryEntity.getName()));
+        Map<Long, String> categoryDict;
+        Map<Long, String> groupDict;
 
 
+        if ("base".equals(attrType)){
+            List<AttrGroupEntity> attrGroupEntities = attrGroupDao.selectBatchIds(relationDict.values());
+
+            groupDict = attrGroupEntities.stream()
+                    .collect(Collectors.toMap(attrGroupEntity -> attrGroupEntity.getAttrGroupId(), attrGroupEntity -> attrGroupEntity.getAttrGroupName()));
+
+            categoryDict = categoryDao.selectBatchIds(
+                    attrGroupEntities.stream().map(attrGroupEntity -> attrGroupEntity.getCatelogId())
+                            .collect(Collectors.toList())).stream().
+                    collect(Collectors.toMap(categoryEntity -> categoryEntity.getCatId(), categoryEntity -> categoryEntity.getName()));
+
+
+        } else {
+            categoryDict = categoryDao.selectBatchIds(page.getRecords().stream()
+                    .map(attrEntity -> attrEntity.getCatelogId()).collect(Collectors.toList())).stream().
+                    collect(Collectors.toMap(categoryEntity -> categoryEntity.getCatId(), categoryEntity -> categoryEntity.getName()));
+            groupDict = null;
+        }
 
         List<AttrResponseVo> responseVos = page.getRecords().stream().map(attrEntity -> {
             AttrResponseVo attrResponseVo = new AttrResponseVo();
             BeanUtils.copyProperties(attrEntity,attrResponseVo);
             attrResponseVo.setCatelogName(categoryDict.get(attrEntity.getCatelogId()));
-            attrResponseVo.setGroupName(groupDict.get(relationDict.get(attrEntity.getAttrId())));
+            if ("base".equals(attrType)){
+                attrResponseVo.setGroupName(groupDict.get(relationDict.get(attrEntity.getAttrId())));
+            }
             return attrResponseVo;
         }).collect(Collectors.toList());
-
 
         responseVos.forEach(System.out::println);
         pageUtils.setList(responseVos);
@@ -110,11 +123,14 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         AttrEntity attrEntity = new AttrEntity();
         BeanUtils.copyProperties(attr, attrEntity);
         this.save(attrEntity);
-        AttrAttrgroupRelationEntity attrAttrgroupRelationEntity = new AttrAttrgroupRelationEntity();
-        attrAttrgroupRelationEntity.setAttrId(attrEntity.getAttrId());
-        attrAttrgroupRelationEntity.setAttrGroupId(attr.getAttrGroupId());
-        attrAttrgroupRelationEntity.setAttrSort(0);
-        attrAttrgroupRelationDao.insert(attrAttrgroupRelationEntity);
+        if ("1".equals(attr.getAttrType())){
+            System.out.println("+++++++++++++++++++");
+            AttrAttrgroupRelationEntity attrAttrgroupRelationEntity = new AttrAttrgroupRelationEntity();
+            attrAttrgroupRelationEntity.setAttrId(attrEntity.getAttrId());
+            attrAttrgroupRelationEntity.setAttrGroupId(attr.getAttrGroupId());
+            attrAttrgroupRelationEntity.setAttrSort(0);
+            attrAttrgroupRelationDao.insert(attrAttrgroupRelationEntity);
+        }
     }
 
     @Override
