@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.atguigu.common.utils.PageUtils;
 import com.atguigu.gulimall.product.entity.AttrEntity;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,5 +25,9 @@ public interface AttrService extends IService<AttrEntity> {
     AttrResponseVo getInfoById(Long attrId);
 
     void updateInfo(AttrVo attr);
+
+    List<AttrEntity> getRelationAttr(Long attrgroupId, String attrType);
+
+    void deleteAttr(List<Long> asList);
 }
 
