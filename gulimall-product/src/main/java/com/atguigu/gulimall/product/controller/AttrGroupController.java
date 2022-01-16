@@ -1,9 +1,15 @@
 package com.atguigu.gulimall.product.controller;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 
+import com.atguigu.gulimall.product.VO.AttrGroupRelationVo;
+import com.atguigu.gulimall.product.VO.AttrGroupWIthAttrsVo;
+import com.atguigu.gulimall.product.entity.AttrEntity;
+import com.atguigu.gulimall.product.service.AttrAttrgroupRelationService;
+import com.atguigu.gulimall.product.service.AttrService;
 import com.atguigu.gulimall.product.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +37,12 @@ public class AttrGroupController {
 
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private AttrService attrService;
+
+    @Autowired
+    private AttrAttrgroupRelationService relationService;
 
     /**
      * 列表
@@ -81,5 +93,30 @@ public class AttrGroupController {
 
         return R.ok();
     }
+
+    @GetMapping("/{attrgroupId}/attr/relation")
+    public R getAttrGroupRelation(@PathVariable("attrgroupId") Long attrgroupId){
+        List<AttrEntity> attrEntityList = attrService.getRelationAttr(attrgroupId);
+        return R.ok().put("data", attrEntityList);
+    }
+
+    @GetMapping("/{attrgroupId}/noattr/relation")
+    public R getAttrGroupNonRelation(@PathVariable("attrgroupId") Long attrgroupId, @RequestParam Map<String, Object> params){
+        PageUtils attrEntityList = attrService.getNonRelationAttr(attrgroupId, params);
+        return R.ok().put("page", attrEntityList);
+    }
+
+    @PostMapping("/attr/relation/delete")
+    public R deleteAttrGroupRelation(@RequestBody AttrGroupRelationVo[] vos){
+        relationService.deleteRelation(vos);
+        return R.ok();
+    }
+
+    @GetMapping("/{catelogId}/withattr")
+    public R getAttrBycategory(@PathVariable("catelogId") Long catelogId){
+        List<AttrGroupWIthAttrsVo> attrGroupWIthAttrsVos = attrGroupService.getAttrGroupWithAttrsByCategoryId(catelogId);
+        return R.ok().put("data", attrGroupWIthAttrsVos);
+    }
+
 
 }

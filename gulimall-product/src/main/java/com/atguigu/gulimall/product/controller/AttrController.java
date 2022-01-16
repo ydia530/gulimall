@@ -7,6 +7,7 @@ import com.atguigu.gulimall.product.VO.AttrResponseVo;
 import com.atguigu.gulimall.product.VO.AttrVo;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import com.atguigu.gulimall.product.entity.AttrEntity;
@@ -75,8 +76,7 @@ public class AttrController {
      */
     @RequestMapping("/delete")
     public R delete(@RequestBody Long[] attrIds){
-		attrService.removeByIds(Arrays.asList(attrIds));
-
+		attrService.deleteAttr(Arrays.asList(attrIds));
         return R.ok();
     }
 

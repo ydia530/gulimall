@@ -1,5 +1,6 @@
 package com.atguigu.gulimall.product.service.impl;
 
+import com.atguigu.gulimall.product.VO.AttrGroupRelationVo;
 import com.atguigu.gulimall.product.VO.AttrResponseVo;
 import com.atguigu.gulimall.product.VO.AttrVo;
 import com.atguigu.gulimall.product.dao.AttrAttrgroupRelationDao;
@@ -7,14 +8,14 @@ import com.atguigu.gulimall.product.dao.AttrGroupDao;
 import com.atguigu.gulimall.product.dao.CategoryDao;
 import com.atguigu.gulimall.product.entity.AttrAttrgroupRelationEntity;
 import com.atguigu.gulimall.product.entity.AttrGroupEntity;
+import com.atguigu.gulimall.product.entity.CategoryEntity;
 import com.atguigu.gulimall.product.service.CategoryService;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,6 +30,7 @@ import com.atguigu.gulimall.product.dao.AttrDao;
 import com.atguigu.gulimall.product.entity.AttrEntity;
 import com.atguigu.gulimall.product.service.AttrService;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 
 @Service("attrService")
@@ -53,7 +55,7 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         QueryWrapper<AttrEntity> wrapper = new QueryWrapper<>();
 
         //根据属性类型判断
-        wrapper.eq("attr_type", attrType.equals("base") ?1:0);
+        wrapper.eq("attr_type", "base".equals(attrType) ? 1 : 0);
         String keyword = (String) params.get("key");
         if (StringUtils.isNotBlank(keyword)){
             wrapper.and((obj)->
@@ -79,26 +81,17 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         Map<Long, Long> relationDict = relationEntities.stream().collect(Collectors.toMap(relationEntity ->
                 relationEntity.getAttrId(), relationEntity -> relationEntity.getAttrGroupId()));
 
-        Map<Long, String> categoryDict;
-        Map<Long, String> groupDict;
 
+        Map<Long, String> groupDict;
+        Map<Long, String> categoryDict = categoryDao.selectBatchIds(page.getRecords().stream()
+                        .map(attrEntity -> attrEntity.getCatelogId()).collect(Collectors.toList())).stream().
+                collect(Collectors.toMap(categoryEntity -> categoryEntity.getCatId(), categoryEntity -> categoryEntity.getName()));
 
         if ("base".equals(attrType)){
             List<AttrGroupEntity> attrGroupEntities = attrGroupDao.selectBatchIds(relationDict.values());
-
             groupDict = attrGroupEntities.stream()
                     .collect(Collectors.toMap(attrGroupEntity -> attrGroupEntity.getAttrGroupId(), attrGroupEntity -> attrGroupEntity.getAttrGroupName()));
-
-            categoryDict = categoryDao.selectBatchIds(
-                    attrGroupEntities.stream().map(attrGroupEntity -> attrGroupEntity.getCatelogId())
-                            .collect(Collectors.toList())).stream().
-                    collect(Collectors.toMap(categoryEntity -> categoryEntity.getCatId(), categoryEntity -> categoryEntity.getName()));
-
-
         } else {
-            categoryDict = categoryDao.selectBatchIds(page.getRecords().stream()
-                    .map(attrEntity -> attrEntity.getCatelogId()).collect(Collectors.toList())).stream().
-                    collect(Collectors.toMap(categoryEntity -> categoryEntity.getCatId(), categoryEntity -> categoryEntity.getName()));
             groupDict = null;
         }
 
@@ -112,7 +105,6 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
             return attrResponseVo;
         }).collect(Collectors.toList());
 
-        responseVos.forEach(System.out::println);
         pageUtils.setList(responseVos);
         return pageUtils;
     }
@@ -123,7 +115,7 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         AttrEntity attrEntity = new AttrEntity();
         BeanUtils.copyProperties(attr, attrEntity);
         this.save(attrEntity);
-        if (1 == attr.getAttrType()){
+        if (1 == attr.getAttrType() && attr.getAttrGroupId() != null){
             AttrAttrgroupRelationEntity attrAttrgroupRelationEntity = new AttrAttrgroupRelationEntity();
             attrAttrgroupRelationEntity.setAttrId(attrEntity.getAttrId());
             attrAttrgroupRelationEntity.setAttrGroupId(attr.getAttrGroupId());
@@ -141,8 +133,10 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         AttrAttrgroupRelationEntity relationEntity = attrAttrgroupRelationDao.
                 selectOne(new QueryWrapper<AttrAttrgroupRelationEntity>()
                         .eq("attr_id", attrResponseVo.getAttrId()));
-        attrResponseVo.setAttrGroupId(relationEntity.getAttrGroupId());
-        attrResponseVo.setGroupName(attrGroupDao.selectById(relationEntity.getAttrGroupId()).getAttrGroupName());
+        if (relationEntity != null){
+            attrResponseVo.setAttrGroupId(relationEntity.getAttrGroupId());
+            attrResponseVo.setGroupName(attrGroupDao.selectById(relationEntity.getAttrGroupId()).getAttrGroupName());
+        }
         return attrResponseVo;
     }
 
@@ -155,11 +149,72 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         this.updateById(attrEntity);
 
         //更新属性与属性分组关联
-        AttrAttrgroupRelationEntity relationEntity = new AttrAttrgroupRelationEntity();
-        relationEntity.setAttrGroupId(attr.getAttrGroupId());
-        attrAttrgroupRelationDao.update(
-                relationEntity, new UpdateWrapper<AttrAttrgroupRelationEntity>().eq("attr_id", attr.getAttrId()));
+        AttrAttrgroupRelationEntity relationEntity = attrAttrgroupRelationDao.selectOne(
+                new QueryWrapper<AttrAttrgroupRelationEntity>().eq("attr_id", attr.getAttrId()));
 
+        if (relationEntity != null){
+            if (attr.getAttrGroupId() == null){
+                AttrGroupRelationVo attrGroupRelationVo = new AttrGroupRelationVo();
+                BeanUtils.copyProperties(relationEntity, attrGroupRelationVo);
+                attrAttrgroupRelationDao.deleteRelation(new AttrGroupRelationVo[]{attrGroupRelationVo});
+            } else{
+                relationEntity.setAttrGroupId(attr.getAttrGroupId());
+                attrAttrgroupRelationDao.updateById(relationEntity);
+            }
+        } else{
+            if (attr.getAttrGroupId() != null){
+                AttrAttrgroupRelationEntity relation = new AttrAttrgroupRelationEntity();
+                relation.setAttrId(attr.getAttrId());
+                relation.setAttrGroupId(attr.getAttrGroupId());
+                attrAttrgroupRelationDao.insert(relation);
+            }
+        }
+    }
+
+    /**
+     * 跟据分组关系，查找相关属性
+     * @param attrgroupId
+     * @return
+     */
+    @Override
+    public List<AttrEntity> getRelationAttr(Long attrgroupId) {
+        List<AttrAttrgroupRelationEntity> relationEntities = attrAttrgroupRelationDao.selectList(
+                new QueryWrapper<AttrAttrgroupRelationEntity>().eq("attr_group_id", attrgroupId));
+
+        List<AttrEntity> attrEntityList = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(relationEntities)){
+            attrEntityList = this.listByIds(relationEntities.stream().
+                    map(relationEntity -> relationEntity.getAttrId()).collect(Collectors.toList()));
+        }
+        return attrEntityList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteAttr(List<Long> attrIds) {
+        //先删除属性
+        this.removeByIds(attrIds);
+
+        //在删除属性与分组对应关系
+
+        attrAttrgroupRelationDao.delete(
+                new QueryWrapper<AttrAttrgroupRelationEntity>().in("attr_id", attrIds));
+
+    }
+
+    @Override
+    public PageUtils getNonRelationAttr(Long attrgroupId, Map<String, Object> params) {
+        List<AttrAttrgroupRelationEntity> relationEntities = attrAttrgroupRelationDao.selectList(
+                new QueryWrapper<AttrAttrgroupRelationEntity>().eq("attr_group_id", attrgroupId));
+        if (!CollectionUtils.isEmpty(relationEntities)){
+            Long categoryId = categoryDao.selectOne(new QueryWrapper<CategoryEntity>().eq("cat_id",relationEntities.get(0).getAttrGroupId())).getCatId();
+            IPage<AttrEntity> page = this.page(
+                    new Query<AttrEntity>().getPage(params),
+                    new QueryWrapper<AttrEntity>().eq("catelog_id", categoryId));
+            return new PageUtils(page);
+
+        }
+        return null;
     }
 
 }
