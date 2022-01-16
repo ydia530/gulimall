@@ -26,8 +26,10 @@ public interface AttrService extends IService<AttrEntity> {
 
     void updateInfo(AttrVo attr);
 
-    List<AttrEntity> getRelationAttr(Long attrgroupId, String attrType);
+    List<AttrEntity> getRelationAttr(Long attrgroupId);
 
     void deleteAttr(List<Long> asList);
+
+    PageUtils getNonRelationAttr(Long attrgroupId, Map<String, Object> params);
 }
 

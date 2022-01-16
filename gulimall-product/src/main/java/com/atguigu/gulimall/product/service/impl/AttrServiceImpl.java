@@ -8,14 +8,14 @@ import com.atguigu.gulimall.product.dao.AttrGroupDao;
 import com.atguigu.gulimall.product.dao.CategoryDao;
 import com.atguigu.gulimall.product.entity.AttrAttrgroupRelationEntity;
 import com.atguigu.gulimall.product.entity.AttrGroupEntity;
+import com.atguigu.gulimall.product.entity.CategoryEntity;
 import com.atguigu.gulimall.product.service.CategoryService;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,6 +30,7 @@ import com.atguigu.gulimall.product.dao.AttrDao;
 import com.atguigu.gulimall.product.entity.AttrEntity;
 import com.atguigu.gulimall.product.service.AttrService;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 
 @Service("attrService")
@@ -173,22 +174,19 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
     /**
      * 跟据分组关系，查找相关属性
      * @param attrgroupId
-     * @param attrType
      * @return
      */
     @Override
-    public List<AttrEntity> getRelationAttr(Long attrgroupId, String attrType) {
-
-        //1.首先要根据url判断获取关系还是无关系的 attr -> 查询相关的, noattr -> 查询无关的（查询可以新增的属性）
-        QueryWrapper<AttrAttrgroupRelationEntity> queryWrapper = new QueryWrapper<>();
-//        if ("attr".equals(attrType)){
-//            queryWrapper
-//        }
+    public List<AttrEntity> getRelationAttr(Long attrgroupId) {
         List<AttrAttrgroupRelationEntity> relationEntities = attrAttrgroupRelationDao.selectList(
                 new QueryWrapper<AttrAttrgroupRelationEntity>().eq("attr_group_id", attrgroupId));
 
-        return this.listByIds(relationEntities.stream().
-                map(relationEntity -> relationEntity.getAttrId()).collect(Collectors.toList()));
+        List<AttrEntity> attrEntityList = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(relationEntities)){
+            attrEntityList = this.listByIds(relationEntities.stream().
+                    map(relationEntity -> relationEntity.getAttrId()).collect(Collectors.toList()));
+        }
+        return attrEntityList;
     }
 
     @Override
@@ -202,6 +200,21 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         attrAttrgroupRelationDao.delete(
                 new QueryWrapper<AttrAttrgroupRelationEntity>().in("attr_id", attrIds));
 
+    }
+
+    @Override
+    public PageUtils getNonRelationAttr(Long attrgroupId, Map<String, Object> params) {
+        List<AttrAttrgroupRelationEntity> relationEntities = attrAttrgroupRelationDao.selectList(
+                new QueryWrapper<AttrAttrgroupRelationEntity>().eq("attr_group_id", attrgroupId));
+        if (!CollectionUtils.isEmpty(relationEntities)){
+            Long categoryId = categoryDao.selectOne(new QueryWrapper<CategoryEntity>().eq("cat_id",relationEntities.get(0).getAttrGroupId())).getCatId();
+            IPage<AttrEntity> page = this.page(
+                    new Query<AttrEntity>().getPage(params),
+                    new QueryWrapper<AttrEntity>().eq("catelog_id", categoryId));
+            return new PageUtils(page);
+
+        }
+        return null;
     }
 
 }

@@ -6,6 +6,7 @@ import java.util.Map;
 
 
 import com.atguigu.gulimall.product.VO.AttrGroupRelationVo;
+import com.atguigu.gulimall.product.VO.AttrGroupWIthAttrsVo;
 import com.atguigu.gulimall.product.entity.AttrEntity;
 import com.atguigu.gulimall.product.service.AttrAttrgroupRelationService;
 import com.atguigu.gulimall.product.service.AttrService;
@@ -93,17 +94,28 @@ public class AttrGroupController {
         return R.ok();
     }
 
-    @GetMapping("/{attrgroupId}/{attrType}/relation")
-    public R getAttrGroupRelation(@PathVariable("attrgroupId") Long attrgroupId, @PathVariable("attrType") String attrType){
-        List<AttrEntity> attrEntityList = attrService.getRelationAttr(attrgroupId, attrType);
-
+    @GetMapping("/{attrgroupId}/attr/relation")
+    public R getAttrGroupRelation(@PathVariable("attrgroupId") Long attrgroupId){
+        List<AttrEntity> attrEntityList = attrService.getRelationAttr(attrgroupId);
         return R.ok().put("data", attrEntityList);
+    }
+
+    @GetMapping("/{attrgroupId}/noattr/relation")
+    public R getAttrGroupNonRelation(@PathVariable("attrgroupId") Long attrgroupId, @RequestParam Map<String, Object> params){
+        PageUtils attrEntityList = attrService.getNonRelationAttr(attrgroupId, params);
+        return R.ok().put("page", attrEntityList);
     }
 
     @PostMapping("/attr/relation/delete")
     public R deleteAttrGroupRelation(@RequestBody AttrGroupRelationVo[] vos){
         relationService.deleteRelation(vos);
         return R.ok();
+    }
+
+    @GetMapping("/{catelogId}/withattr")
+    public R getAttrBycategory(@PathVariable("catelogId") Long catelogId){
+        List<AttrGroupWIthAttrsVo> attrGroupWIthAttrsVos = attrGroupService.getAttrGroupWithAttrsByCategoryId(catelogId);
+        return R.ok().put("data", attrGroupWIthAttrsVos);
     }
 
 
