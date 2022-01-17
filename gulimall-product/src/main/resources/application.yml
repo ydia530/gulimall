@@ -8,6 +8,15 @@ spring:
     nacos:
       discovery:
         server-addr: 81.70.10.9:8848
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+  thymeleaf:
+    cache: false
+
+  mvc:
+    static-path-pattern: /static/**
+  resources:
+    static-locations: classpath:/static/
 
 
   application:
