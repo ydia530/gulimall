@@ -1,13 +1,13 @@
 spring:
+  profiles:
+    active: dev
+
   datasource:
     username: root
     password: 123456
     url: jdbc:mysql://81.70.10.9:3306/gulimall_pms?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai
     driver-class-name: com.mysql.cj.jdbc.Driver
-  cloud:
-    nacos:
-      discovery:
-        server-addr: 81.70.10.9:8848
+
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8

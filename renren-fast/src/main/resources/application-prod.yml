@@ -32,7 +32,11 @@ spring:
                 wall:
                     config:
                         multi-statement-allow: true
-
+    cloud:
+        nacos:
+            discovery:
+                server-addr: 101.43.189.185:8848
+                ip: 101.43.189.185
 
 ##多数据源的配置
 #dynamic:

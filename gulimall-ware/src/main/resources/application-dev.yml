@@ -1,0 +1,10 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 81.70.10.9:8848
+
+server:
+  port: 11000
+
+

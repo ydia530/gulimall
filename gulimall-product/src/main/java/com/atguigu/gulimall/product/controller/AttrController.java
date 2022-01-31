@@ -22,7 +22,6 @@ import com.atguigu.common.utils.R;
 
 /**
  * 商品属性
- *
  * @author DY
  * @email ydia530@aucklanduni.ac.nz
  * @date 2022-01-08 13:42:58

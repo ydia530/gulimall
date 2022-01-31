@@ -2,7 +2,6 @@ spring:
   profiles:
     active: dev
   application:
-    name: gulimall-third-party
-
+    name: gulimall-search
 server:
-  port: 30000
+  port: 7070
