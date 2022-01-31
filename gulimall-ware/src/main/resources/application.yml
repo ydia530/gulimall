@@ -1,4 +1,14 @@
 spring:
+  profiles:
+    active: dev
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+  application:
+    name: gulimall-ware
+
   datasource:
     driverClassName: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://81.70.10.9:3306/gulimall_wms?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
@@ -13,5 +23,10 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
 
+
 server:
   port: 11000
+
+logging:
+  level:
+    com.atguigu.gulimall: debug

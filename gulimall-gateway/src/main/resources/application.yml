@@ -1,11 +1,8 @@
 spring:
+  profiles:
+    active: dev
 
-  cloud:
-    nacos:
-      discovery:
-        server-addr: 81.70.10.9:8848
-
-    gateway:
+  gateway:
       routes:
         - id: product_route
           uri: lb://gulimall-product
@@ -42,10 +39,10 @@ spring:
           filters: # 这段过滤器和验证码有关，api内容缓存了/renren-fast，还得注意/renren-fast也注册到nacos中
             - RewritePath=/api/(?<segment>.*),/renren-fast/$\{segment}
 
-
-
-
-
+        - id: gulimall_host
+          uri: lb://gulimall-product
+          predicates:
+            - Host=**.yuanmall.top,yuanmall.top
 
   application:
     name: gulimall-gateway

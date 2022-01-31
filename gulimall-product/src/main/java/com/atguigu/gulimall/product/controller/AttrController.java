@@ -1,10 +1,13 @@
 package com.atguigu.gulimall.product.controller;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import com.atguigu.gulimall.product.VO.AttrResponseVo;
 import com.atguigu.gulimall.product.VO.AttrVo;
+import com.atguigu.gulimall.product.entity.ProductAttrValueEntity;
+import com.atguigu.gulimall.product.service.ProductAttrValueService;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +22,6 @@ import com.atguigu.common.utils.R;
 
 /**
  * 商品属性
- *
  * @author DY
  * @email ydia530@aucklanduni.ac.nz
  * @date 2022-01-08 13:42:58
@@ -30,6 +32,9 @@ public class AttrController {
     @Autowired
     private AttrService attrService;
 
+    @Autowired
+    private ProductAttrValueService productAttrValueService;
+
     /**
      * 列表
      */
@@ -38,6 +43,12 @@ public class AttrController {
         PageUtils page = attrService.queryPage(id, params, attrType);
 
         return R.ok().put("page", page);
+    }
+
+    @GetMapping("/base/listforspu/{spuId}")
+    public R baseAttrListForSpu(@PathVariable("spuId") Long spuId){
+        List<ProductAttrValueEntity> entities = productAttrValueService.baseAttrListForSpu(spuId);
+        return R.ok().put("data", entities);
     }
 
 
@@ -68,6 +79,13 @@ public class AttrController {
     public R update(@RequestBody AttrVo attr){
 		attrService.updateInfo(attr);
 
+        return R.ok();
+    }
+
+
+    @PostMapping("/update/{spuId}")
+    public R updateSpuAttr(@PathVariable("spuId") Long spuId, @RequestBody List<ProductAttrValueEntity> entities){
+        productAttrValueService.updateSpuAttr(spuId, entities);
         return R.ok();
     }
 

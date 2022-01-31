@@ -18,14 +18,14 @@ public class Skus {
 
     private List<Attr> attr;
     private String skuName;
-    private String price;
+    private BigDecimal price;
     private String skuTitle;
     private String skuSubtitle;
     private List<Images> images;
     private List<String> descar;
-    private BigDecimal fullCount;
+    private Integer fullCount;
     private BigDecimal discount;
-    private BigDecimal countStatus;
+    private Integer countStatus;
     private BigDecimal fullPrice;
     private BigDecimal reducePrice;
     private BigDecimal priceStatus;
