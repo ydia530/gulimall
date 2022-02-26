@@ -3,5 +3,11 @@ spring:
     active: dev
   application:
     name: gulimall-search
+
+  mvc:
+    static-path-pattern: /static/**
+  resources:
+    static-locations: classpath:/static/
+
 server:
   port: 7070
