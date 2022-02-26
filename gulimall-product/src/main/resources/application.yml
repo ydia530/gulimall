@@ -23,6 +23,28 @@ spring:
   application:
     name: gulimall-product
 
+  redis:
+    port: 6379
+    host: 81.70.10.9
+
+  #   设置缓存类型
+  cache:
+    type: redis
+    #   设置存活时间
+    redis:
+      time-to-live: 3600000
+      #      如果指定了前缀就用我们指定的 如果没有就用缓存的名字作为前缀
+      #      key-prefix: CACHE_
+      #      是否缓存空值
+      cache-null-values: true
+  #    cache-names:
+
+  #配置项目热部署
+  devtools:
+    restart:
+      enabled: true
+      additional-paths: src/main/java
+
 # MapperScan
 # sql映射文件位置
 mybatis-plus:
@@ -37,5 +59,7 @@ server:
 
 logging:
   level:
-    com.atguigu.gulimall: debug
+    com.atguigu.gulimall: error
+
+
 

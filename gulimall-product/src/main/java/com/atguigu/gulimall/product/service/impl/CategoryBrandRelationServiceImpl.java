@@ -1,6 +1,5 @@
 package com.atguigu.gulimall.product.service.impl;
 
-import com.atguigu.gulimall.product.VO.BrandVo;
 import com.atguigu.gulimall.product.dao.BrandDao;
 import com.atguigu.gulimall.product.dao.CategoryDao;
 import com.atguigu.gulimall.product.entity.BrandEntity;

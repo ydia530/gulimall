@@ -1,11 +1,18 @@
 package com.atguigu.gulimall.product.service.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.atguigu.gulimall.product.VO.Catalog2Vo;
 import com.atguigu.gulimall.product.service.CategoryBrandRelationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -17,6 +24,7 @@ import com.atguigu.gulimall.product.dao.CategoryDao;
 import com.atguigu.gulimall.product.entity.CategoryEntity;
 import com.atguigu.gulimall.product.service.CategoryService;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 
 @Service("categoryService")
@@ -24,6 +32,9 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     @Autowired
     private CategoryBrandRelationService categoryBrandRelationService;
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -76,18 +87,62 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
     public void updateCascade(CategoryEntity category) {
         this.updateById(category);
         categoryBrandRelationService.updateCategory(category.getCatId(), category.getName());
-
     }
 
+    /**
+     * 级联更新所有数据			[分区名默认是就是缓存的前缀] SpringCache: 不加锁
+     * @CacheEvict: 缓存失效模式		--- 页面一修改 然后就清除这两个缓存
+     * key = "'getLevel1Categorys'" : 记得加单引号 [子解析字符串]
+     * @Caching: 同时进行多种缓存操作
+     * @CacheEvict(value = {"category"}, allEntries = true) : 删除这个分区所有数据
+     * @CachePut: 这次查询操作写入缓存
+     */
+//    @CacheEvict(value = {"category"}, allEntries = true)
+//	@CachePut
+//    @Caching(evict = {
+//            @CacheEvict(value = {"category"}, key = "'getLevel1Categorys'"),
+//            @CacheEvict(value = {"category"}, key = "'getCatelogJson'")
+//    })
+//
+
+    /**
+     * @Cacheable: 当前方法的结果需要缓存 并指定缓存名字
+     *  缓存的value值 默认使用jdk序列化
+     *  默认ttl时间 -1
+     *	key: 里面默认会解析表达式 字符串用 ''
+     *
+     *  自定义:
+     *  	1.指定生成缓存使用的key
+     *  	2.指定缓存数据存活时间	[配置文件中修改]
+     *  	3.将数据保存为json格式
+     *
+     *  sync = true: --- 开启同步锁
+     *
+     */
+    @Cacheable(value = {"category"}, key = "#root.method.name", sync = true)
     @Override
     public List<CategoryEntity> getLevel1Categorys() {
-        List<CategoryEntity> categoryEntities = baseMapper.selectList(new QueryWrapper<CategoryEntity>().eq("parent_cid", 0));
-        return categoryEntities;
+        return baseMapper.selectList(new QueryWrapper<CategoryEntity>().eq("cat_level", 1));
+        // 测试能否缓存null值
+//		return null;
     }
 
+
+    @Cacheable(value = "category", key = "#root.methodName")
     @Override
     public Map<String, List<Catalog2Vo>> getCatelogJson() {
-        List<CategoryEntity> level1Category = getLevel1Categorys();
+        String catelog = stringRedisTemplate.opsForValue().get("catelog");
+        if (StringUtils.isEmpty(catelog)){
+            Map<String, List<Catalog2Vo>> catelogs = getCatelogJsonFromDb();
+            stringRedisTemplate.opsForValue().set("catelog", JSON.toJSONString(catelogs), 1, TimeUnit.DAYS);
+            return catelogs;
+        }
+        System.out.println("缓存命中");
+        Map<String, List<Catalog2Vo>> result = JSON.parseObject(catelog, new TypeReference<Map<String, List<Catalog2Vo>>>(){});
+        return result;
+    }
+
+    public Map<String, List<Catalog2Vo>> getCatelogJsonFromDb() {
 
         List<CategoryEntity> categoryEntities = this.list();
         //查出所有一级分类
