@@ -1,6 +1,7 @@
 package com.atguigu.gulimall.product.service;
 
 import com.atguigu.gulimall.product.VO.AttrGroupWIthAttrsVo;
+import com.atguigu.gulimall.product.VO.SpuItemAttrGroup;
 import com.atguigu.gulimall.product.entity.AttrEntity;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.atguigu.common.utils.PageUtils;
@@ -23,5 +24,7 @@ public interface AttrGroupService extends IService<AttrGroupEntity> {
     PageUtils queryPage(Map<String, Object> params, Integer id);
 
     List<AttrGroupWIthAttrsVo> getAttrGroupWithAttrsByCategoryId(Long catelogId);
+
+    List<SpuItemAttrGroup> getAttrGroupWithAttrsBySpuId(Long spuId, Long catelogId);
 }
 

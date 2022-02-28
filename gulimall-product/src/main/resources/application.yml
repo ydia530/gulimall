@@ -59,7 +59,11 @@ server:
 
 logging:
   level:
-    com.atguigu.gulimall: error
+    com.atguigu.gulimall: debug
 
 
 
+thread-pool:
+  core-size: 20
+  max-size: 200
+  keep-alive-time: 10
